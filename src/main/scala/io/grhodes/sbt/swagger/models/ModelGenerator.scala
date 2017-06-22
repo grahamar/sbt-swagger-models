@@ -22,7 +22,8 @@ object ModelGenerator {
             disableTypesafeIds: Boolean,
             enumVendorExtensionName: Option[String],
             taggedAttributes: Seq[String],
-            generator: String): scala.Seq[java.io.File] = {
+            generator: String,
+            verbose: Boolean): scala.Seq[java.io.File] = {
 
     streams.log.info(s"Source: $sourceDir")
 
@@ -35,7 +36,7 @@ object ModelGenerator {
       file(cache.getAbsolutePath) / "swagger",
       inStyle = FilesInfo.lastModified,
       outStyle = FilesInfo.exists
-    )(compile(streams.log, sourceDir, targetDir, serviceSpec, basePkg, generator))
+    )(compile(streams.log, sourceDir, targetDir, serviceSpec, basePkg, generator, verbose))
 
     cachedCompile((sourceDir ** fileFilter).get.toSet).toSeq
   }
@@ -71,23 +72,24 @@ object ModelGenerator {
                       target: File,
                       specFile: Option[File],
                       basePkg: Option[String],
-                      generator: String)(in: Set[File]) = {
+                      generator: String,
+                      verbose: Boolean)(in: Set[File]) = {
     in.foreach { swaggerFile =>
-      log.info(s"Swagger spec: $swaggerFile")
-      log.info(s"Is spec: ${specFile.exists(_.asFile == swaggerFile.asFile)}")
+      log.debug(s"Swagger spec: $swaggerFile")
+      log.debug(s"Is spec: ${specFile.exists(_.asFile == swaggerFile.asFile)}")
       if(specFile.isEmpty || specFile.exists(_.asFile == swaggerFile.asFile)) {
         log.info(s"[$generator] Generating source files from Swagger spec: $swaggerFile")
         val generatorName = resolveConfigFromName(generator).getOrElse(sys.error(s"Failed to locate a generator by name $generator!"))
-        runCodegen(swaggerFile.toURI.toString, target, generatorName.getClass.getName, basePkg)
+        runCodegen(swaggerFile.toURI.toString, target, generatorName.getClass.getName, basePkg, verbose)
       }
     }
 
     (target ** "*.scala").get.toSet
   }
 
-  private def runCodegen(swaggerFile: String, target: File, generator: String, basePkg: Option[String]) = {
+  private def runCodegen(swaggerFile: String, target: File, generator: String, basePkg: Option[String], verbose: Boolean) = {
     val configurator = new CodegenConfigurator()
-    configurator.setVerbose(false)
+    configurator.setVerbose(verbose)
 
     /* The `inputSpec` within the configurator can be a stringified URI.
        However it seems if you pass it a file:/ URI, it fails because it tests
@@ -105,13 +107,11 @@ object ModelGenerator {
 
     // determine the scala package of the generated code by the
     // filename of the OpenAPI specification
-    val filename = FilenameUtils.getName(swaggerFile)
-    val basename = FilenameUtils.getBaseName(filename)
+    val invokerPackage = basePkg.getOrElse(FilenameUtils.getBaseName(swaggerFile))
 
-    val invokerPackage = basePkg.getOrElse(basename)
     configurator.setInvokerPackage(invokerPackage)
-    configurator.setModelPackage(s"$invokerPackage.model")
-//    configurator.setApiPackage(s"$invokerPackage.api")
+    configurator.setModelPackage(Option(invokerPackage).filter(_.nonEmpty).map(_ + ".model").getOrElse("model"))
+    configurator.setModelPackage(Option(invokerPackage).filter(_.nonEmpty).map(_ + ".api").getOrElse("api"))
 
     val input: ClientOptInput = configurator.toClientOptInput
 

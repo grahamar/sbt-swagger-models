@@ -19,6 +19,7 @@ object SbtSwaggerModelsPlugin extends AutoPlugin {
     val swaggerDisableTypesafeIds: SettingKey[Boolean] = settingKey[Boolean]("Request code generation to be done without typesafe Id encapsulation")
     val swaggerTaggedAttributes: SettingKey[Seq[String]] = settingKey[Seq[String]]("Optionally tagged attributes")
     val swaggerGenerator: SettingKey[String] = settingKey[String]("The swagger-codegen generator to use")
+    val swaggerGeneratorVerbose: SettingKey[Boolean] = settingKey[Boolean]("Turn on verbose for swagger-codegen generator")
   }
 
   import autoImport._
@@ -32,6 +33,7 @@ object SbtSwaggerModelsPlugin extends AutoPlugin {
     swaggerDisableTypesafeIds := false,
     swaggerTaggedAttributes := Seq(),
     swaggerGenerator := "simple-scala",
+    swaggerGeneratorVerbose := false,
     swaggerGenerateModels := ModelGenerator(
       streams = streams.value,
       sourceDir = (swaggerSourceDirectory in swaggerGenerateModels).value,
@@ -41,7 +43,8 @@ object SbtSwaggerModelsPlugin extends AutoPlugin {
       disableTypesafeIds = swaggerDisableTypesafeIds.value,
       enumVendorExtensionName = swaggerEnumVendorExtensionName.value,
       taggedAttributes = swaggerTaggedAttributes.value,
-      generator = swaggerGenerator.value
+      generator = swaggerGenerator.value,
+      verbose = swaggerGeneratorVerbose.value
     ),
     watchSources ++= ((swaggerSourceDirectory in swaggerGenerateModels).value ** ModelGenerator.fileFilter).get,
     managedSourceDirectories in Compile += (swaggerOutputDirectory in swaggerGenerateModels).value,

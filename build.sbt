@@ -11,7 +11,7 @@ resolvers += Resolver.bintrayRepo("grahamar", "maven")
 
 libraryDependencies ++= Seq(
   "io.swagger" % "swagger-codegen" % "2.2.2",
-  "io.grhodes" %% "simple-scala-generator" % "0.1.1",
+  "io.grhodes" %% "simple-scala-generator" % "0.1.2",
   "org.scalactic" %% "scalactic" % "3.0.1" % Test,
   "org.scalatest" %% "scalatest" % "3.0.1" % Test
 )
