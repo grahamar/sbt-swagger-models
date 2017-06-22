@@ -18,7 +18,7 @@ object ModelGenerator {
             sourceDir: File,
             targetDir: File,
             specFile: Option[String],
-            basePkg: String,
+            basePkg: Option[String],
             disableTypesafeIds: Boolean,
             enumVendorExtensionName: Option[String],
             taggedAttributes: Seq[String],
@@ -70,7 +70,7 @@ object ModelGenerator {
                       srcDir: File,
                       target: File,
                       specFile: Option[File],
-                      basePkg: String,
+                      basePkg: Option[String],
                       generator: String)(in: Set[File]) = {
     in.foreach { swaggerFile =>
       log.info(s"Swagger spec: $swaggerFile")
@@ -85,7 +85,7 @@ object ModelGenerator {
     (target ** "*.scala").get.toSet
   }
 
-  private def runCodegen(swaggerFile: String, target: File, generator: String, basePkg: String) = {
+  private def runCodegen(swaggerFile: String, target: File, generator: String, basePkg: Option[String]) = {
     val configurator = new CodegenConfigurator()
     configurator.setVerbose(false)
 
@@ -108,7 +108,7 @@ object ModelGenerator {
     val filename = FilenameUtils.getName(swaggerFile)
     val basename = FilenameUtils.getBaseName(filename)
 
-    val invokerPackage = basePkg + "." + basename
+    val invokerPackage = basePkg.map(_ + "." + basename).getOrElse("." + basename)
     configurator.setInvokerPackage(invokerPackage)
     configurator.setModelPackage(s"$invokerPackage.model")
 //    configurator.setApiPackage(s"$invokerPackage.api")

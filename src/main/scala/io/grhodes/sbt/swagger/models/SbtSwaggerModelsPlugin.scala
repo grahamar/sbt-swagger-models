@@ -13,7 +13,7 @@ object SbtSwaggerModelsPlugin extends AutoPlugin {
     val swaggerGenerateModels: TaskKey[Seq[File]] = taskKey[Seq[java.io.File]]("Generate models for swagger APIs")
     val swaggerSourceDirectory: SettingKey[File] = settingKey[File]("Directory containing input swagger files")
     val swaggerOutputDirectory: SettingKey[File] = settingKey[File]("Directory into which the source code should be generated")
-    val swaggerOutputPackage: SettingKey[String] = settingKey[String]("Package into which the source code should be generated")
+    val swaggerOutputPackage: SettingKey[Option[String]] = settingKey[Option[String]]("Package into which the source code should be generated")
     val swaggerSpecFilename: SettingKey[Option[String]] = settingKey[Option[String]]("Optionally specify the service swagger spec file (all other swagger files are client specs)")
     val swaggerEnumVendorExtensionName: SettingKey[Option[String]] = settingKey[Option[String]]("Optionally specify a vendor extension to be handled as an 'enum'")
     val swaggerDisableTypesafeIds: SettingKey[Boolean] = settingKey[Boolean]("Request code generation to be done without typesafe Id encapsulation")
@@ -26,7 +26,7 @@ object SbtSwaggerModelsPlugin extends AutoPlugin {
   override lazy val projectSettings = Seq(
     swaggerSourceDirectory := (resourceDirectory in Compile).value,
     swaggerOutputDirectory := (sourceManaged in Compile).value / "swagger",
-    swaggerOutputPackage := "swagger",
+    swaggerOutputPackage := None,
     swaggerSpecFilename := Some("api.yaml"),
     swaggerEnumVendorExtensionName := None,
     swaggerDisableTypesafeIds := false,
