@@ -108,7 +108,7 @@ object ModelGenerator {
     val filename = FilenameUtils.getName(swaggerFile)
     val basename = FilenameUtils.getBaseName(filename)
 
-    val invokerPackage = basePkg.map(_ + "." + basename).getOrElse("." + basename)
+    val invokerPackage = basePkg.getOrElse(basename)
     configurator.setInvokerPackage(invokerPackage)
     configurator.setModelPackage(s"$invokerPackage.model")
 //    configurator.setApiPackage(s"$invokerPackage.api")
