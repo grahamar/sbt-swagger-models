@@ -87,7 +87,7 @@ object ModelGenerator {
 
   private def runCodegen(swaggerFile: String, target: File, generator: String, basePkg: String) = {
     val configurator = new CodegenConfigurator()
-    configurator.setVerbose(true)
+    configurator.setVerbose(false)
 
     /* The `inputSpec` within the configurator can be a stringified URI.
        However it seems if you pass it a file:/ URI, it fails because it tests
