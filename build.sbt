@@ -3,7 +3,15 @@ organization := "io.grhodes.sbt"
 
 version := "git describe --tags --dirty --always".!!.stripPrefix("v").trim.replace("-dirty", "-SNAPSHOT")
 
-scalaVersion := "2.10.6"
+crossSbtVersions := Seq("1.1.4", "0.13.16")
+sbtVersion in Global := crossSbtVersions.value.head
+
+lazy val sbtCrossVersion = sbtVersion in pluginCrossBuild
+scalaVersion := (CrossVersion partialVersion sbtCrossVersion.value match {
+  case Some((0, 13)) => "2.10.6"
+  case Some((1, _))  => "2.12.4"
+  case _             => sys error s"Unhandled sbt version ${sbtCrossVersion.value}"
+})
 
 sbtPlugin := true
 

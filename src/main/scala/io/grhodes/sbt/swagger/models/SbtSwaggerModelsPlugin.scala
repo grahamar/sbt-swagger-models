@@ -46,7 +46,6 @@ object SbtSwaggerModelsPlugin extends AutoPlugin {
       generator = swaggerGenerator.value,
       verbose = swaggerGeneratorVerbose.value
     ),
-    watchSources ++= ((swaggerSourceDirectory in swaggerGenerateModels).value ** ModelGenerator.fileFilter).get,
     managedSourceDirectories in Compile += (swaggerOutputDirectory in swaggerGenerateModels).value,
     sourceGenerators in Compile += swaggerGenerateModels.taskValue
   )
