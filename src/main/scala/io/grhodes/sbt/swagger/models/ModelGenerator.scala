@@ -84,7 +84,7 @@ object ModelGenerator {
       if(specFile.isEmpty || specFile.exists(_.asFile == swaggerFile.asFile)) {
         log.info(s"[$generator] Generating source files from Swagger spec: $swaggerFile")
         val generatorName = resolveConfigFromName(generator).getOrElse(sys.error(s"Failed to locate a generator by name $generator!"))
-        runCodegen(swaggerFile.toURI.toString, target, generatorName.getClass.getName, basePkg, modelPkg, apiPkg, verbose)
+        runCodegen(swaggerFile.toURI.toString, srcDir, target, generatorName.getClass.getName, basePkg, modelPkg, apiPkg, verbose)
       }
     }
 
@@ -92,6 +92,7 @@ object ModelGenerator {
   }
 
   private def runCodegen(swaggerFile: String,
+                         srcDir: File,
                          target: File,
                          generator: String,
                          basePkg: Option[String],
@@ -114,6 +115,7 @@ object ModelGenerator {
     configurator.setLang(generator)
     configurator.setInputSpec(specLocation)
     configurator.setOutputDir(target.toString)
+    configurator.addAdditionalProperty("resourceOutputDirectory", srcDir.toString)
 
     // determine the scala package of the generated code by the
     // filename of the OpenAPI specification
