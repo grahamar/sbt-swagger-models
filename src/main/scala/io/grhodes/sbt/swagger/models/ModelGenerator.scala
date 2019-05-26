@@ -2,8 +2,8 @@ package io.grhodes.sbt.swagger.models
 
 import java.util.ServiceLoader
 
-import io.swagger.codegen.{ClientOptInput, CodegenConfig, DefaultGenerator}
-import io.swagger.codegen.config.CodegenConfigurator
+import io.swagger.codegen.v3.{ClientOptInput, CodegenConfig, DefaultGenerator}
+import io.swagger.codegen.v3.config.CodegenConfigurator
 import org.apache.commons.io.FilenameUtils
 import sbt._
 import sbt.Keys.TaskStreams
@@ -113,7 +113,7 @@ object ModelGenerator {
     }
 
     configurator.setLang(generator)
-    configurator.setInputSpec(specLocation)
+    configurator.setInputSpecURL(specLocation)
     configurator.setOutputDir(target.toString)
     configurator.addAdditionalProperty("resourceOutputDirectory", srcDir.toString)
 
@@ -129,13 +129,14 @@ object ModelGenerator {
 
     val input: ClientOptInput = configurator.toClientOptInput
 
+
     // configurator.toClientOptInput() attempts to read the file and parse an
     // OpenAPI specification. If it fails for any reason, that reason is
     // swallowed and null is returned. For now, this is our best bet at
     // providing a slightly less hostile error message, but we should look
     // manually constructing ClientOptInput, so we can control how parsing
     // errors are reported.
-    Option(input.getSwagger)
+    Option(input.getOpenAPI)
       .map(_ => new DefaultGenerator().opts(input).generate())
       .getOrElse(sys.error(s"Failed to load OpenAPI specification from $swaggerFile! Is it valid?"))
   }
