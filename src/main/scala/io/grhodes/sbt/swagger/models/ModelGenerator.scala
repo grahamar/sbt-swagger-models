@@ -15,8 +15,9 @@ object ModelGenerator {
   val fileFilter: FileFilter = "*.yml" || "*.yaml" || "*.json"
 
   def apply(streams: TaskStreams,
-            sourceDir: File,
-            targetDir: File,
+            srcManagedDir: File,
+            srcDir: File,
+            baseDir: File,
             specFile: Option[String],
             basePkg: Option[String],
             modelPkg: Option[String],
@@ -27,9 +28,9 @@ object ModelGenerator {
             generator: String,
             verbose: Boolean): scala.Seq[java.io.File] = {
 
-    streams.log.info(s"Source: $sourceDir")
+    streams.log.info(s"Source: $srcDir")
 
-    val serviceSpec = specFile.map(sourceDir / _)
+    val serviceSpec = specFile.map(srcDir / _)
     val cache = streams.cacheDirectory
 
     streams.log.info(s"Spec: $serviceSpec")
@@ -38,9 +39,9 @@ object ModelGenerator {
       file(cache.getAbsolutePath) / "swagger",
       inStyle = FilesInfo.lastModified,
       outStyle = FilesInfo.exists
-    )(compile(streams.log, sourceDir, targetDir, serviceSpec, basePkg, modelPkg, apiPkg, generator, verbose))
+    )(compile(streams.log, srcManagedDir, baseDir, serviceSpec, basePkg, modelPkg, apiPkg, generator, verbose))
 
-    cachedCompile((sourceDir ** fileFilter).get.toSet).toSeq
+    cachedCompile((srcDir ** fileFilter).get.toSet).toSeq
   }
 
   /**
@@ -70,8 +71,8 @@ object ModelGenerator {
   }
 
   private def compile(log: Logger,
-                      srcDir: File,
-                      target: File,
+                      srcManagedDir: File,
+                      baseDir: File,
                       specFile: Option[File],
                       basePkg: Option[String],
                       modelPkg: Option[String],
@@ -79,21 +80,21 @@ object ModelGenerator {
                       generator: String,
                       verbose: Boolean)(in: Set[File]) = {
     in.foreach { swaggerFile =>
-      log.debug(s"Swagger spec: $swaggerFile")
-      log.debug(s"Is spec: ${specFile.exists(_.asFile == swaggerFile.asFile)}")
+      log.info(s"Swagger spec: $swaggerFile")
+      log.info(s"Is spec: ${specFile.exists(_.asFile == swaggerFile.asFile)}")
       if(specFile.isEmpty || specFile.exists(_.asFile == swaggerFile.asFile)) {
         log.info(s"[$generator] Generating source files from Swagger spec: $swaggerFile")
         val generatorName = resolveConfigFromName(generator).getOrElse(sys.error(s"Failed to locate a generator by name $generator!"))
-        runCodegen(swaggerFile.toURI.toString, srcDir, target, generatorName.getClass.getName, basePkg, modelPkg, apiPkg, verbose)
+        runCodegen(swaggerFile.toURI.toString, srcManagedDir, baseDir, generatorName.getClass.getName, basePkg, modelPkg, apiPkg, verbose)
       }
     }
 
-    (target ** "*.scala").get.toSet
+    (srcManagedDir ** "*.scala").get.toSet
   }
 
   private def runCodegen(swaggerFile: String,
-                         srcDir: File,
-                         target: File,
+                         srcManagedDir: File,
+                         baseDir: File,
                          generator: String,
                          basePkg: Option[String],
                          modelPkg: Option[String],
@@ -114,8 +115,8 @@ object ModelGenerator {
 
     configurator.setLang(generator)
     configurator.setInputSpecURL(specLocation)
-    configurator.setOutputDir(target.toString)
-    configurator.addAdditionalProperty("resourceOutputDirectory", srcDir.toString)
+    configurator.setOutputDir(baseDir.toString)
+    configurator.addAdditionalProperty("sourceManagedDir", srcManagedDir.toString)
 
     // determine the scala package of the generated code by the
     // filename of the OpenAPI specification

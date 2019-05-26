@@ -12,7 +12,6 @@ object SbtSwaggerModelsPlugin extends AutoPlugin {
   object autoImport {
     val swaggerGenerateModels: TaskKey[Seq[File]] = taskKey[Seq[java.io.File]]("Generate models for swagger APIs")
     val swaggerSourceDirectory: SettingKey[File] = settingKey[File]("Directory containing input swagger files")
-    val swaggerOutputDirectory: SettingKey[File] = settingKey[File]("Directory into which the source code should be generated")
     val swaggerOutputPackage: SettingKey[Option[String]] = settingKey[Option[String]]("Package into which the source code should be generated")
     val swaggerApiPackage: SettingKey[Option[String]] = settingKey[Option[String]]("Package into which the api source code should be generated")
     val swaggerModelPackage: SettingKey[Option[String]] = settingKey[Option[String]]("Package into which the model source code should be generated")
@@ -28,7 +27,6 @@ object SbtSwaggerModelsPlugin extends AutoPlugin {
 
   override lazy val projectSettings = Seq(
     swaggerSourceDirectory := (resourceDirectory in Compile).value,
-    swaggerOutputDirectory := (sourceManaged in Compile).value / "swagger",
     swaggerOutputPackage := None,
     swaggerModelPackage := None,
     swaggerApiPackage := None,
@@ -40,8 +38,9 @@ object SbtSwaggerModelsPlugin extends AutoPlugin {
     swaggerGeneratorVerbose := false,
     swaggerGenerateModels := ModelGenerator(
       streams = streams.value,
-      sourceDir = (swaggerSourceDirectory in swaggerGenerateModels).value,
-      targetDir = (swaggerOutputDirectory in swaggerGenerateModels).value,
+      srcManagedDir = (sourceManaged in Compile).value / "swagger",
+      srcDir = (swaggerSourceDirectory in swaggerGenerateModels).value,
+      baseDir = (baseDirectory in Compile).value,
       specFile = (swaggerSpecFilename in swaggerGenerateModels).value,
       basePkg = (swaggerOutputPackage in swaggerGenerateModels).value,
       modelPkg = (swaggerModelPackage in swaggerGenerateModels).value,
@@ -52,7 +51,6 @@ object SbtSwaggerModelsPlugin extends AutoPlugin {
       generator = swaggerGenerator.value,
       verbose = swaggerGeneratorVerbose.value
     ),
-    managedSourceDirectories in Compile += (swaggerOutputDirectory in swaggerGenerateModels).value,
     sourceGenerators in Compile += swaggerGenerateModels.taskValue
   )
 
