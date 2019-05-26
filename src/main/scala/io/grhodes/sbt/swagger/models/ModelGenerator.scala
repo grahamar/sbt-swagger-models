@@ -19,6 +19,8 @@ object ModelGenerator {
             targetDir: File,
             specFile: Option[String],
             basePkg: Option[String],
+            modelPkg: Option[String],
+            apiPkg: Option[String],
             disableTypesafeIds: Boolean,
             enumVendorExtensionName: Option[String],
             taggedAttributes: Seq[String],
@@ -36,7 +38,7 @@ object ModelGenerator {
       file(cache.getAbsolutePath) / "swagger",
       inStyle = FilesInfo.lastModified,
       outStyle = FilesInfo.exists
-    )(compile(streams.log, sourceDir, targetDir, serviceSpec, basePkg, generator, verbose))
+    )(compile(streams.log, sourceDir, targetDir, serviceSpec, basePkg, modelPkg, apiPkg, generator, verbose))
 
     cachedCompile((sourceDir ** fileFilter).get.toSet).toSeq
   }
@@ -72,6 +74,8 @@ object ModelGenerator {
                       target: File,
                       specFile: Option[File],
                       basePkg: Option[String],
+                      modelPkg: Option[String],
+                      apiPkg: Option[String],
                       generator: String,
                       verbose: Boolean)(in: Set[File]) = {
     in.foreach { swaggerFile =>
@@ -80,14 +84,20 @@ object ModelGenerator {
       if(specFile.isEmpty || specFile.exists(_.asFile == swaggerFile.asFile)) {
         log.info(s"[$generator] Generating source files from Swagger spec: $swaggerFile")
         val generatorName = resolveConfigFromName(generator).getOrElse(sys.error(s"Failed to locate a generator by name $generator!"))
-        runCodegen(swaggerFile.toURI.toString, target, generatorName.getClass.getName, basePkg, verbose)
+        runCodegen(swaggerFile.toURI.toString, target, generatorName.getClass.getName, basePkg, modelPkg, apiPkg, verbose)
       }
     }
 
     (target ** "*.scala").get.toSet
   }
 
-  private def runCodegen(swaggerFile: String, target: File, generator: String, basePkg: Option[String], verbose: Boolean) = {
+  private def runCodegen(swaggerFile: String,
+                         target: File,
+                         generator: String,
+                         basePkg: Option[String],
+                         modelPkg: Option[String],
+                         apiPkg: Option[String],
+                         verbose: Boolean) = {
     val configurator = new CodegenConfigurator()
     configurator.setVerbose(verbose)
 
@@ -108,10 +118,12 @@ object ModelGenerator {
     // determine the scala package of the generated code by the
     // filename of the OpenAPI specification
     val invokerPackage = basePkg.getOrElse(FilenameUtils.getBaseName(swaggerFile))
+    val apiPackage = apiPkg.orElse(Option(invokerPackage).filter(_.nonEmpty).map(_ + ".api"))
+    val modelPackage = modelPkg.orElse(Option(invokerPackage).filter(_.nonEmpty).map(_ + ".model"))
 
     configurator.setInvokerPackage(invokerPackage)
-    configurator.setModelPackage(Option(invokerPackage).filter(_.nonEmpty).map(_ + ".model").getOrElse("model"))
-    configurator.setModelPackage(Option(invokerPackage).filter(_.nonEmpty).map(_ + ".api").getOrElse("api"))
+    configurator.setModelPackage(modelPackage.getOrElse("model"))
+    configurator.setApiPackage(apiPackage.getOrElse("api"))
 
     val input: ClientOptInput = configurator.toClientOptInput
 
