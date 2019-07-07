@@ -80,8 +80,8 @@ object ModelGenerator {
                       generator: String,
                       verbose: Boolean)(in: Set[File]) = {
     in.foreach { swaggerFile =>
-      log.info(s"Swagger spec: $swaggerFile")
-      log.info(s"Is spec: ${specFile.exists(_.asFile == swaggerFile.asFile)}")
+      log.debug(s"Swagger spec: $swaggerFile")
+      log.debug(s"Is spec: ${specFile.exists(_.asFile == swaggerFile.asFile)}")
       if(specFile.isEmpty || specFile.exists(_.asFile == swaggerFile.asFile)) {
         log.info(s"[$generator] Generating source files from Swagger spec: $swaggerFile")
         val generatorName = resolveConfigFromName(generator).getOrElse(sys.error(s"Failed to locate a generator by name $generator!"))

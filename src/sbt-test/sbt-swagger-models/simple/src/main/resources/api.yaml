@@ -60,6 +60,11 @@ paths:
       tags:
         - pets
       parameters:
+        - in: query
+          name: test.name
+          required: true
+          schema:
+            type: string
         - name: petId
           in: path
           required: true
@@ -85,6 +90,7 @@ components:
       required:
         - id
         - name
+        - generated_at.start
       properties:
         id:
           type: integer
@@ -93,6 +99,12 @@ components:
           type: string
         tag:
           type: string
+        timestamp:
+          type: string
+          format: "date-time"
+        generated_at.start:
+          type: string
+          format: "date-time"
     Pets:
       type: array
       items:
